@@ -1,0 +1,34 @@
+{
+  "name": "Dino Dash - 8Bit Runner",
+  "short_name": "Dino Dash",
+  "description": "เกมวิ่งหลบสิ่งกีดขวางแบบ 8-bit พิกเซลกับไดโนเสาร์",
+  "start_url": "/dino-dash.html",
+  "display": "fullscreen",
+  "scope": "/",
+  "orientation": "portrait-primary",
+  "background_color": "#1a1a2e",
+  "theme_color": "#2d5a1e",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231a1a2e' width='192' height='192'/><rect fill='%234a8f2e' x='40' y='60' width='112' height='72'/><rect fill='%232d5a1e' x='36' y='80' width='8' width='8' height='16'/><rect fill='%232d5a1e' x='148' y='80' width='8' height='16'/><rect fill='%23d9f0b0' x='64' y='92' width='64' height='20'/><circle fill='%231a1a1a' cx='128' cy='72' r='6'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%231a1a2e' width='512' height='512'/><rect fill='%234a8f2e' x='100' y='160' width='312' height='192'/><rect fill='%232d5a1e' x='96' y='220' width='20' height='40'/><rect fill='%232d5a1e' x='396' y='220' width='20' height='40'/><rect fill='%23d9f0b0' x='170' y='240' width='172' height='52'/><circle fill='%231a1a1a' cx='340' cy='190' r='16'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["games"],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%237ec8e3' width='540' height='720'/><rect fill='%236fc8e3' y='480' width='540' height='240'/><rect fill='%234a8f2e' x='80' y='300' width='140' height='140'/><text x='270' y='100' font-size='40' fill='%23ffe066' text-anchor='middle' font-family='monospace' font-weight='bold'>DINO DASH</text></svg>",
+      "sizes": "540x720",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ]
+}

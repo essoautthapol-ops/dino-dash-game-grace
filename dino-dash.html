@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dino Dash">
+<meta name="theme-color" content="#2d5a1e">
+<meta name="description" content="เกมวิ่งหลบสิ่งกีดขวางแบบ 8-bit พิกเซลกับไดโนเสาร์">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231a1a2e' width='192' height='192'/><rect fill='%234a8f2e' x='40' y='60' width='112' height='72'/><rect fill='%232d5a1e' x='36' y='80' width='8' height='16'/><rect fill='%232d5a1e' x='148' y='80' width='8' height='16'/><rect fill='%23d9f0b0' x='64' y='92' width='64' height='20'/><circle fill='%231a1a1a' cx='128' cy='72' r='6'/></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%232d5a1e' width='180' height='180' rx='40'/><rect fill='%234a8f2e' x='35' y='55' width='110' height='70'/><rect fill='%231a1a1a' x='32' y='75' width='8' height='16'/><rect fill='%231a1a1a' x='140' y='75' width='8' height='16'/><rect fill='%23d9f0b0' x='60' y='85' width='60' height='18'/><circle fill='%231a1a1a' cx='125' cy='65' r='5'/></svg>">
+<title>Dino Dash - 8Bit Runner</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', monospace;
+    color: #fff;
+    overflow: hidden;
+  }
+
+  #game-container {
+    position: relative;
+    border: 6px solid #4a4a6a;
+    border-radius: 4px;
+    box-shadow: 0 0 0 4px #16213e, 0 8px 30px rgba(0,0,0,0.6);
+    background: #7ec8e3;
+  }
+
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    background: linear-gradient(#7ec8e3 0%, #b8e4f0 70%, #c9e896 70%, #c9e896 100%);
+  }
+
+  #hud {
+    position: absolute;
+    top: 26px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+    pointer-events: none;
+  }
+
+  #overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10,10,25,0.75);
+    text-align: center;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  #overlay h1 {
+    font-size: 22px;
+    color: #ffe066;
+    text-shadow: 3px 3px 0 #d94f4f;
+    letter-spacing: 2px;
+  }
+
+  #overlay p {
+    font-size: 10px;
+    line-height: 1.8;
+    color: #eee;
+  }
+
+  #overlay .score-line {
+    font-size: 12px;
+    color: #8fd960;
+  }
+
+  .btn {
+    font-family: 'Press Start 2P', monospace;
+    background: #ffe066;
+    color: #2d2d2d;
+    border: none;
+    padding: 12px 20px;
+    font-size: 11px;
+    border-bottom: 4px solid #d4a017;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+  .btn:active {
+    transform: translateY(2px);
+    border-bottom: 2px solid #d4a017;
+  }
+
+  #hint {
+    margin-top: 6px;
+    font-size: 8px;
+    color: #b8e4f0;
+    text-align: center;
+  }
+
+  #power-wrap {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  #power-label {
+    font-size: 8px;
+    color: #ffe066;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+    white-space: nowrap;
+    transition: color 0.15s;
+  }
+
+  #power-label.ready {
+    color: #ff5a5a;
+    animation: pulse 0.6s infinite steps(2);
+  }
+
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
+  }
+
+  #power-track {
+    flex: 1;
+    height: 14px;
+    background: #16213e;
+    border: 3px solid #4a4a6a;
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px #0a0a15;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  #power-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(#ffe066, #d4a017);
+    transition: width 0.1s linear;
+  }
+
+  #power-fill.ready {
+    background: linear-gradient(#ff8f4a, #ff5a5a);
+  }
+
+  #skin-select {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 320px;
+  }
+
+  .skin-swatch {
+    width: 48px;
+    height: 48px;
+    background: #16213e;
+    border: 3px solid #4a4a6a;
+    border-radius: 4px;
+    cursor: pointer;
+    image-rendering: pixelated;
+  }
+
+  .skin-swatch:hover {
+    border-color: #8fd960;
+  }
+
+  .skin-swatch.selected {
+    border-color: #ffe066;
+    box-shadow: 0 0 0 2px #ffe066;
+  }
+
+  #skin-name {
+    font-size: 9px;
+    color: #8fd960;
+    margin-top: -6px;
+  }
+</style>
+</head>
+<body>
+
+<div id="game-container">
+  <canvas id="game" width="800" height="300"></canvas>
+  <div id="hud">
+    <div id="score">SCORE: 0</div>
+    <div id="best">BEST: 0</div>
+  </div>
+  <div id="power-wrap">
+    <div id="power-label">POWER</div>
+    <div id="power-track"><div id="power-fill"></div></div>
+  </div>
+  <div id="overlay"></div>
+</div>
+<div id="hint">SPACE / ลูกศรขึ้น / แตะหน้าจอ = กระโดด (กดซ้ำในอากาศได้ 1 ครั้ง) &nbsp;|&nbsp; X = ใช้พลัง (เมื่อหลอดเต็ม)</div>
+
+<script>
+(() => {
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+const W = canvas.width, H = canvas.height;
+const GROUND_Y = H - 42;
+const PX = 4; // pixel unit size for sprite drawing
+
+const scoreEl = document.getElementById('score');
+const bestEl = document.getElementById('best');
+const overlay = document.getElementById('overlay');
+const powerFillEl = document.getElementById('power-fill');
+const powerLabelEl = document.getElementById('power-label');
+
+let best = parseInt(localStorage.getItem('dinoDashBest') || '0', 10);
+bestEl.textContent = 'BEST: ' + best;
+
+// ---------- Audio (simple 8bit beeps) ----------
+let actx;
+function ensureAudio(){ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); }
+function beep(freq, dur, type='square', vol=0.08, delay=0){
+  ensureAudio();
+  const t0 = actx.currentTime + delay;
+  const osc = actx.createOscillator();
+  const gain = actx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(vol, t0);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  osc.connect(gain); gain.connect(actx.destination);
+  osc.start(t0); osc.stop(t0 + dur);
+}
+function sfxJump(second){
+  if(second){
+    beep(560, 0.1, 'square', 0.09);
+    beep(760, 0.08, 'square', 0.07, 0.05);
+  } else {
+    beep(420, 0.12, 'square', 0.09);
+    beep(600, 0.08, 'square', 0.06, 0.05);
+  }
+}
+function sfxCoin(){ beep(880, 0.08, 'square', 0.08); beep(1200, 0.08, 'square', 0.07, 0.06); }
+function sfxHit(){ beep(120, 0.35, 'sawtooth', 0.12); }
+function sfxDamage(){ beep(180, 0.15, 'sawtooth', 0.1); }
+function sfxHeal(){
+  beep(500, 0.09, 'square', 0.08);
+  beep(700, 0.09, 'square', 0.08, 0.07);
+  beep(950, 0.12, 'square', 0.08, 0.14);
+}
+function sfxPower(){
+  beep(300, 0.1, 'square', 0.1);
+  beep(500, 0.1, 'square', 0.1, 0.08);
+  beep(750, 0.14, 'square', 0.1, 0.16);
+}
+
+// ---------- Colors ----------
+const COL = {
+  darkGreen: '#2d5a1e',
+  midGreen: '#4a8f2e',
+  lightGreen: '#8fd960',
+  belly: '#d9f0b0',
+  black: '#1a1a1a',
+  white: '#ffffff',
+  rock: '#8a8a8a',
+  rockDark: '#5c5c5c',
+  cactus: '#2f8f4a',
+  cactusDark: '#1e6633',
+  coin: '#ffe066',
+  coinDark: '#d4a017',
+  cloud: '#ffffff',
+  hill: '#a3d977',
+  hillDark: '#7fbf5a'
+};
+
+// ---------- Dino skins (character select) ----------
+const SKINS = [
+  { id:'forest', name:'ไดโนป่า',    dark:'#2d5a1e', mid:'#4a8f2e', belly:'#d9f0b0' },
+  { id:'ice',    name:'ไดโนน้ำแข็ง', dark:'#1e3f5a', mid:'#2e7f9f', belly:'#c9f0f8' },
+  { id:'magma',  name:'ไดโนลาวา',   dark:'#5a1e0e', mid:'#c9502e', belly:'#f8d0a0' },
+  { id:'grape',  name:'ไดโนองุ่น',   dark:'#3a1e5a', mid:'#7a3ea8', belly:'#e0c9f8' },
+  { id:'sakura', name:'ไดโนซากุระ', dark:'#5a1e3a', mid:'#c94f8f', belly:'#f8d0e8' },
+  { id:'gold',   name:'ไดโนทองคำ',  dark:'#5a4a0e', mid:'#c9a52e', belly:'#f8ecc0' }
+];
+let selectedSkinIndex = parseInt(localStorage.getItem('dinoDashSkin') || '0', 10);
+if(selectedSkinIndex < 0 || selectedSkinIndex >= SKINS.length) selectedSkinIndex = 0;
+
+// ---------- Dino sprite (blocky pixel drawing) ----------
+function drawDino(x, y, legFrame, jumping, glow, skin){
+  skin = skin || SKINS[selectedSkinIndex];
+  // x,y = top-left of bounding box (approx 44x44)
+  const p = (col,row,w,h,c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x+col*PX), Math.round(y+row*PX), w*PX, h*PX); };
+
+  if(glow){
+    ctx.save();
+    ctx.globalAlpha = 0.35 + Math.sin(Date.now()/60)*0.15;
+    ctx.fillStyle = '#ffe066';
+    ctx.beginPath();
+    ctx.ellipse(x+22, y+24, 30, 26, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // tail
+  p(0,6,3,2, skin.mid);
+  p(0,5,1,1, skin.dark);
+  // body
+  p(2,4,6,5, skin.mid);
+  p(3,8,5,2, skin.belly);
+  // back spikes
+  p(2,3,1,1, skin.dark);
+  p(4,2,1,1, skin.dark);
+  p(6,3,1,1, skin.dark);
+  // head
+  p(7,0,5,4, skin.mid);
+  p(11,1,1,1, COL.black); // eye
+  p(11,3,2,1, skin.dark); // snout
+  // arm
+  p(4,6,1,2, skin.dark);
+
+  if(jumping){
+    p(2,10,2,2, skin.dark);
+    p(6,10,2,2, skin.dark);
+  } else if(legFrame===0){
+    p(2,10,2,3, skin.dark);
+    p(6,10,2,2, skin.dark);
+  } else {
+    p(2,10,2,2, skin.dark);
+    p(6,10,2,3, skin.dark);
+  }
+}
+
+function drawMiniDino(targetCtx, skin){
+  targetCtx.clearRect(0,0,48,48);
+  const u = 3;
+  const ox = 3, oy = 8;
+  const p = (col,row,w,h,c) => { targetCtx.fillStyle = c; targetCtx.fillRect(ox+col*u, oy+row*u, w*u, h*u); };
+  p(0,6,3,2, skin.mid);
+  p(0,5,1,1, skin.dark);
+  p(2,4,6,5, skin.mid);
+  p(3,8,5,2, skin.belly);
+  p(2,3,1,1, skin.dark);
+  p(4,2,1,1, skin.dark);
+  p(6,3,1,1, skin.dark);
+  p(7,0,5,4, skin.mid);
+  p(11,1,1,1, '#1a1a1a');
+  p(11,3,2,1, skin.dark);
+  p(4,6,1,2, skin.dark);
+  p(2,10,2,3, skin.dark);
+  p(6,10,2,2, skin.dark);
+}
+
+function drawCactus(x, y, scale){
+  const p = (col,row,w,h,c) => { ctx.fillStyle=c; ctx.fillRect(Math.round(x+col*PX*scale), Math.round(y+row*PX*scale), w*PX*scale, h*PX*scale); };
+  p(1,0,2,7, COL.cactus);
+  p(0,3,1,3, COL.cactus);
+  p(3,2,1,3, COL.cactus);
+  p(1,6,2,1, COL.cactusDark);
+}
+
+function drawRock(x, y, scale){
+  const p = (col,row,w,h,c) => { ctx.fillStyle=c; ctx.fillRect(Math.round(x+col*PX*scale), Math.round(y+row*PX*scale), w*PX*scale, h*PX*scale); };
+  p(0,2,5,3, COL.rock);
+  p(1,1,3,1, COL.rock);
+  p(0,4,5,1, COL.rockDark);
+  p(1,2,1,1, COL.rockDark);
+}
+
+function drawPit(x, y, w, h, frameNow){
+  // dirt banks
+  ctx.fillStyle = '#8a6a3a';
+  ctx.fillRect(x-4, y-2, w+8, h+8);
+  // water body
+  ctx.fillStyle = '#2a6f97';
+  ctx.fillRect(x, y, w, h+6);
+  // animated wave dots
+  ctx.fillStyle = '#6fc2e8';
+  for(let i=0; i<w; i+=8){
+    const wy = y + 4 + Math.sin((i + frameNow*3)/9)*2;
+    ctx.fillRect(Math.round(x+i), Math.round(wy), 4, 2);
+  }
+  // dark bottom edge
+  ctx.fillStyle = '#164a63';
+  ctx.fillRect(x, y+h+2, w, 4);
+}
+
+function drawCreature(x, y, legFrame){
+  const u = PX*0.8;
+  const p = (col,row,w,h,c) => { ctx.fillStyle=c; ctx.fillRect(Math.round(x+col*u), Math.round(y+row*u), w*u, h*u); };
+  const dark = '#7a2e12', mid = '#c9502e', black = '#1a1a1a';
+  // tail
+  p(0,3,2,1, mid);
+  // body
+  p(1,1,4,3, mid);
+  // spike
+  p(2,0,1,1, dark);
+  // head
+  p(4,0,3,2, mid);
+  p(6,0,1,1, black); // eye
+  // legs alternate (running)
+  if(legFrame===0){
+    p(1,4,1,2, dark);
+    p(3,4,1,1, dark);
+  } else {
+    p(1,4,1,1, dark);
+    p(3,4,1,2, dark);
+  }
+}
+
+function drawCoin(x, y, spin){
+  const w = spin ? 2 : 6;
+  ctx.fillStyle = COL.coinDark;
+  ctx.fillRect(Math.round(x - w/2), Math.round(y-8), w, 16);
+  ctx.fillStyle = COL.coin;
+  ctx.fillRect(Math.round(x - w/2), Math.round(y-8), Math.max(w-2,1), 16);
+}
+
+function drawPotion(x, y, bob){
+  const py = y + Math.sin(bob)*3;
+  const p = (col,row,w,h,c) => { ctx.fillStyle=c; ctx.fillRect(Math.round(x+col*3), Math.round(py+row*3), w*3, h*3); };
+  // bottle glass
+  p(1,0,2,1,'#e8f4ff');
+  p(0,1,4,1,'#e8f4ff');
+  p(0,2,4,4,'#e8f4ff');
+  // liquid (red healing potion)
+  p(0,3,4,3,'#e8536b');
+  p(1,2,2,1,'#e8536b');
+  // outline / cork
+  ctx.fillStyle = '#8a5a3a';
+  ctx.fillRect(Math.round(x+3), Math.round(py-3), 6, 3);
+  // shine
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(Math.round(x+1), Math.round(py+7), 2, 2);
+}
+
+function drawHearts(hp, maxHP){
+  const startX = 10, startY = 10, size = 16, gap = 4;
+  for(let i=0;i<maxHP;i++){
+    const hx = startX + i*(size+gap);
+    const hy = startY;
+    const full = i < hp;
+    ctx.fillStyle = full ? '#ff5a5a' : '#3a2a35';
+    // pixel heart shape (4x4 block grid, each block 4px)
+    const b = 4;
+    const shape = [
+      [0,1,1,0,1,1,0],
+      [1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1],
+      [0,1,1,1,1,1,0],
+      [0,0,1,1,1,0,0],
+      [0,0,0,1,0,0,0]
+    ];
+    for(let r=0;r<shape.length;r++){
+      for(let c=0;c<shape[r].length;c++){
+        if(shape[r][c]) ctx.fillRect(hx+c*b*0.55, hy+r*b*0.55, b*0.6, b*0.6);
+      }
+    }
+    if(full){
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillRect(hx+1, hy+1, 2, 2);
+    }
+  }
+}
+
+// ---------- Game state ----------
+let state = 'start'; // start | playing | gameover
+let player, obstacles, coins, potions, clouds, hills, groundOffset, gameSpeed, baseSpeed, distance, coinCount, frame, spawnTimer, coinSpawnTimer, potionSpawnTimer, invincible;
+let powerEnergy, boostActive, boostTimer;
+let hp, maxHP, hitTimer;
+
+const POWER_MAX = 100;
+const POWER_PER_COIN = 16;
+const BOOST_DURATION = 240; // frames (~4s at 60fps)
+const BOOST_SPEED_MULT = 1.5;
+const HIT_INVINCIBLE_TIME = 90; // frames of invincibility flicker after being hit
+maxHP = 5;
+
+function resetGame(){
+  player = { x:70, y:GROUND_Y-44, w:44, h:44, vy:0, jumping:false, legFrame:0, legTimer:0, jumpsLeft:2 };
+  obstacles = [];
+  coins = [];
+  potions = [];
+  clouds = [];
+  hills = [];
+  for(let i=0;i<5;i++) clouds.push({ x: Math.random()*W, y: 20+Math.random()*60, s: 0.6+Math.random()*0.8 });
+  for(let i=0;i<6;i++) hills.push({ x: i*180, s: 0.8+Math.random()*0.6 });
+  groundOffset = 0;
+  baseSpeed = 3.4;
+  gameSpeed = baseSpeed;
+  distance = 0;
+  coinCount = 0;
+  frame = 0;
+  spawnTimer = 70;
+  coinSpawnTimer = 90;
+  potionSpawnTimer = 240;
+  invincible = 0;
+  powerEnergy = 0;
+  boostActive = false;
+  boostTimer = 0;
+  hp = maxHP;
+  hitTimer = 0;
+  updatePowerUI();
+}
+
+function updatePowerUI(){
+  const pct = Math.min(100, (powerEnergy/POWER_MAX)*100);
+  powerFillEl.style.width = pct + '%';
+  const ready = powerEnergy >= POWER_MAX;
+  powerFillEl.classList.toggle('ready', ready || boostActive);
+  powerLabelEl.classList.toggle('ready', ready && !boostActive);
+  powerLabelEl.textContent = boostActive ? 'BOOST!' : (ready ? 'READY! (X)' : 'POWER');
+}
+
+function activateBoost(){
+  if(state !== 'playing') return;
+  if(boostActive) return;
+  if(powerEnergy < POWER_MAX) return;
+  boostActive = true;
+  boostTimer = BOOST_DURATION;
+  sfxPower();
+}
+
+function skinSwatchHTML(){
+  return SKINS.map((s,i) => `<canvas class="skin-swatch${i===selectedSkinIndex?' selected':''}" data-idx="${i}" width="48" height="48" title="${s.name}"></canvas>`).join('');
+}
+
+function attachSkinHandlers(){
+  const swatches = overlay.querySelectorAll('.skin-swatch');
+  const nameEl = overlay.querySelector('#skin-name');
+  swatches.forEach(cv => {
+    const idx = parseInt(cv.dataset.idx, 10);
+    const cctx = cv.getContext('2d');
+    cctx.imageSmoothingEnabled = false;
+    drawMiniDino(cctx, SKINS[idx]);
+    cv.addEventListener('click', () => {
+      selectedSkinIndex = idx;
+      localStorage.setItem('dinoDashSkin', String(idx));
+      swatches.forEach(s => s.classList.remove('selected'));
+      cv.classList.add('selected');
+      if(nameEl) nameEl.textContent = SKINS[idx].name;
+    });
+  });
+}
+
+function renderStartOverlay(){
+  overlay.innerHTML = `
+    <h1>🦖 DINO DASH</h1>
+    <p>กระโดดได้ 2 ครั้งติดกัน (Double Jump)<br>ข้ามตะบองเพชร หิน บ่อน้ำ<br>ระวังสัตว์วิ่งไล่ที่เร็วกว่าปกติ!<br>มีเลือด 5 หัวใจ เก็บขวดยาเพื่อเติมเลือด<br>เก็บพลังให้เต็มแล้วกด X เพื่อพุ่งทะลุสิ่งกีดขวาง!</p>
+    <div id="skin-select">${skinSwatchHTML()}</div>
+    <div id="skin-name">${SKINS[selectedSkinIndex].name}</div>
+    <button class="btn" id="startBtn">START GAME</button>
+  `;
+  attachSkinHandlers();
+  document.getElementById('startBtn').addEventListener('click', startGame);
+}
+
+function renderGameOverOverlay(finalScore){
+  overlay.innerHTML = `
+    <h1>GAME OVER</h1>
+    <p class="score-line">SCORE: ${finalScore}</p>
+    <p class="score-line">BEST: ${best}</p>
+    <div id="skin-select">${skinSwatchHTML()}</div>
+    <div id="skin-name">${SKINS[selectedSkinIndex].name}</div>
+    <button class="btn" id="restartBtn">RETRY</button>
+  `;
+  attachSkinHandlers();
+  document.getElementById('restartBtn').addEventListener('click', startGame);
+}
+
+const GRAVITY = 0.62;
+const JUMP_VELOCITY = -12.2;
+
+function jump(){
+  if(state === 'start'){ startGame(); return; }
+  if(state === 'gameover'){ startGame(); return; }
+  if(state === 'playing' && player.jumpsLeft > 0){
+    const isSecond = player.jumpsLeft < 2;
+    player.vy = isSecond ? JUMP_VELOCITY*0.82 : JUMP_VELOCITY;
+    player.jumping = true;
+    player.jumpsLeft--;
+    sfxJump(isSecond);
+  }
+}
+
+function startGame(){
+  ensureAudio();
+  resetGame();
+  state = 'playing';
+  overlay.style.display = 'none';
+}
+
+function gameOver(){
+  state = 'gameover';
+  sfxHit();
+  const finalScore = Math.floor(distance/5) + coinCount*10;
+  if(finalScore > best){
+    best = finalScore;
+    localStorage.setItem('dinoDashBest', String(best));
+  }
+  bestEl.textContent = 'BEST: ' + best;
+  renderGameOverOverlay(finalScore);
+  overlay.style.display = 'flex';
+}
+
+// ---------- Input ----------
+window.addEventListener('keydown', (e) => {
+  if(e.code === 'Space' || e.code === 'ArrowUp'){
+    e.preventDefault();
+    jump();
+  }
+  if(e.code === 'KeyX' || e.code === 'ShiftLeft' || e.code === 'ShiftRight'){
+    e.preventDefault();
+    activateBoost();
+  }
+});
+canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); jump(); });
+powerFillEl.parentElement.addEventListener('pointerdown', (e) => { e.stopPropagation(); activateBoost(); });
+
+// ---------- Spawning ----------
+function spawnObstacle(){
+  const r = Math.random();
+  const scale = 1 + Math.random()*0.4;
+  if(r < 0.32){
+    const h = 7*PX*scale;
+    obstacles.push({ x: W+20, y: GROUND_Y - h, w: 4*PX*scale, h: h, type:'cactus', scale });
+  } else if(r < 0.54){
+    const h = 5*PX*scale;
+    obstacles.push({ x: W+20, y: GROUND_Y - h, w: 5*PX*scale, h: h, type:'rock', scale });
+  } else if(r < 0.78){
+    const w = 64 + Math.random()*46;
+    const h = 14;
+    obstacles.push({ x: W+20, y: GROUND_Y - h, w: w, h: h, type:'pit' });
+  } else {
+    const u = PX*0.8;
+    const h = 6*u;
+    obstacles.push({ x: W+20, y: GROUND_Y - h, w: 7*u, h: h, type:'creature', ownSpeed: 1.6+Math.random()*1.6, legFrame:0, legTimer:0 });
+  }
+}
+
+function spawnCoinGroup(){
+  const groundLevel = Math.random() < 0.4;
+  const y = groundLevel ? GROUND_Y - 20 : GROUND_Y - 70 - Math.random()*40;
+  const count = 3 + Math.floor(Math.random()*4);
+  for(let i=0;i<count;i++){
+    coins.push({ x: W + 30 + i*26, y: y, taken:false, spin: Math.floor(Math.random()*20) });
+  }
+}
+
+function spawnPotion(){
+  const y = GROUND_Y - 26 - Math.random()*30;
+  potions.push({ x: W + 20, y: y, taken:false, bob: Math.random()*10 });
+}
+
+// ---------- Update ----------
+function update(){
+  frame++;
+  gameSpeed = baseSpeed + Math.min(distance/2400, 4.2);
+  if(hitTimer > 0) hitTimer--;
+  if(boostActive){
+    boostTimer--;
+    powerEnergy = Math.max(0, (boostTimer/BOOST_DURATION) * POWER_MAX);
+    gameSpeed *= BOOST_SPEED_MULT;
+    if(boostTimer <= 0){
+      boostActive = false;
+      powerEnergy = 0;
+    }
+  }
+  updatePowerUI();
+  distance += gameSpeed;
+  groundOffset = (groundOffset + gameSpeed) % 24;
+
+  // player physics
+  player.vy += GRAVITY;
+  player.y += player.vy;
+  if(player.y > GROUND_Y - player.h){
+    player.y = GROUND_Y - player.h;
+    player.vy = 0;
+    player.jumping = false;
+    player.jumpsLeft = 2;
+  }
+  player.legTimer++;
+  if(player.legTimer > 6){ player.legTimer = 0; player.legFrame = 1 - player.legFrame; }
+
+  // clouds & hills parallax
+  clouds.forEach(c => { c.x -= gameSpeed*0.25; if(c.x < -60){ c.x = W+60; c.y = 20+Math.random()*60; } });
+  hills.forEach(h => { h.x -= gameSpeed*0.5; if(h.x < -200){ h.x += 180*6; } });
+
+  // obstacles
+  spawnTimer -= 1;
+  if(spawnTimer <= 0){
+    spawnObstacle();
+    spawnTimer = Math.max(55 - gameSpeed*4, 32) + Math.random()*30;
+  }
+  obstacles.forEach(o => {
+    const extra = o.type === 'creature' ? o.ownSpeed : 0;
+    o.x -= (gameSpeed + extra);
+    if(o.type === 'creature'){
+      o.legTimer++;
+      if(o.legTimer > 5){ o.legTimer = 0; o.legFrame = 1 - o.legFrame; }
+    }
+  });
+  obstacles = obstacles.filter(o => o.x + o.w > -20);
+
+  // coins
+  coinSpawnTimer -= 1;
+  if(coinSpawnTimer <= 0){
+    spawnCoinGroup();
+    coinSpawnTimer = 110 + Math.random()*90;
+  }
+  coins.forEach(c => c.x -= gameSpeed);
+  coins = coins.filter(c => c.x > -30 && !c.taken);
+
+  // potions
+  potionSpawnTimer -= 1;
+  if(potionSpawnTimer <= 0){
+    if(hp < maxHP || Math.random() < 0.3) spawnPotion();
+    potionSpawnTimer = 300 + Math.random()*240;
+  }
+  potions.forEach(pt => pt.x -= gameSpeed);
+  potions = potions.filter(pt => pt.x > -30 && !pt.taken);
+
+  // collisions with obstacles
+  const pad = 8;
+  const pb = { x: player.x+pad, y: player.y+pad, w: player.w-pad*2, h: player.h-pad*2 };
+  for(const o of obstacles){
+    if(pb.x < o.x+o.w && pb.x+pb.w > o.x && pb.y < o.y+o.h && pb.y+pb.h > o.y){
+      if(boostActive){
+        o.x = -9999; // smash through obstacle while boosted
+      } else if(hitTimer <= 0){
+        o.x = -9999; // obstacle breaks on hit
+        hp -= 1;
+        hitTimer = HIT_INVINCIBLE_TIME;
+        if(hp <= 0){
+          gameOver();
+          return;
+        } else {
+          sfxDamage();
+        }
+      }
+    }
+  }
+  obstacles = obstacles.filter(o => o.x > -500);
+
+  // collect coins
+  for(const c of coins){
+    if(c.taken) continue;
+    const dx = (player.x+player.w/2) - c.x;
+    const dy = (player.y+player.h/2) - c.y;
+    if(Math.sqrt(dx*dx+dy*dy) < 30){
+      c.taken = true;
+      coinCount++;
+      sfxCoin();
+      if(!boostActive){
+        powerEnergy = Math.min(POWER_MAX, powerEnergy + POWER_PER_COIN);
+      }
+    }
+  }
+
+  // collect potions
+  for(const pt of potions){
+    if(pt.taken) continue;
+    const py = pt.y + Math.sin(pt.bob)*3;
+    const dx = (player.x+player.w/2) - pt.x;
+    const dy = (player.y+player.h/2) - py;
+    if(Math.sqrt(dx*dx+dy*dy) < 30){
+      pt.taken = true;
+      if(hp < maxHP){
+        hp += 1;
+        sfxHeal();
+      }
+    }
+  }
+
+  const currentScore = Math.floor(distance/5) + coinCount*10;
+  scoreEl.textContent = 'SCORE: ' + currentScore;
+}
+
+// ---------- Draw ----------
+function drawBackground(){
+  // sky already via CSS gradient background; draw clouds
+  ctx.fillStyle = COL.cloud;
+  clouds.forEach(c => {
+    const s = c.s;
+    ctx.fillRect(c.x, c.y, 24*s, 8*s);
+    ctx.fillRect(c.x+8*s, c.y-6*s, 16*s, 8*s);
+  });
+
+  // hills
+  hills.forEach(h => {
+    ctx.fillStyle = COL.hillDark;
+    ctx.beginPath();
+    ctx.moveTo(h.x, GROUND_Y);
+    ctx.lineTo(h.x+70*h.s, GROUND_Y-50*h.s);
+    ctx.lineTo(h.x+140*h.s, GROUND_Y);
+    ctx.closePath();
+    ctx.fill();
+  });
+
+  // ground strip
+  ctx.fillStyle = '#c9e896';
+  ctx.fillRect(0, GROUND_Y, W, H-GROUND_Y);
+  ctx.fillStyle = '#a8cf6e';
+  for(let x = -24 + -groundOffset; x < W; x += 24){
+    ctx.fillRect(x, GROUND_Y, 12, 4);
+  }
+  ctx.fillStyle = '#8fbf52';
+  ctx.fillRect(0, GROUND_Y, W, 3);
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  drawBackground();
+
+  obstacles.forEach(o => {
+    if(o.type === 'cactus') drawCactus(o.x, o.y, o.scale);
+    else if(o.type === 'rock') drawRock(o.x, o.y, o.scale);
+    else if(o.type === 'pit') drawPit(o.x, o.y, o.w, o.h, frame);
+    else if(o.type === 'creature') drawCreature(o.x, o.y, o.legFrame);
+  });
+
+  coins.forEach(c => {
+    if(!c.taken){
+      const spinPhase = Math.floor((frame + c.spin)/6) % 4;
+      drawCoin(c.x, c.y, spinPhase===1 || spinPhase===3);
+    }
+  });
+
+  potions.forEach(pt => {
+    if(!pt.taken) drawPotion(pt.x, pt.y, frame/12 + pt.bob);
+  });
+
+  const flicker = hitTimer > 0 && Math.floor(hitTimer/5) % 2 === 0;
+  if(state !== 'start'){
+    if(!flicker) drawDino(player.x, player.y, player.legFrame, player.jumping, boostActive);
+  } else {
+    drawDino(70, GROUND_Y-44, 0, false, false);
+  }
+
+  if(state === 'playing') drawHearts(hp, maxHP);
+}
+
+// ---------- Loop ----------
+function loop(){
+  if(state === 'playing'){
+    update();
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+resetGame();
+renderStartOverlay();
+draw();
+requestAnimationFrame(loop);
+
+// Register service worker for offline support
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js').then(reg => {
+    console.log('✓ Service Worker registered:', reg);
+  }).catch(err => {
+    console.log('Service Worker registration failed:', err);
+  });
+}
+})();
+</script>
+</body>
+</html>
